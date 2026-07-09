@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>M.A.F Salgados - Controle de Estoque</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <!-- Tela de Login -->
+    <div id="loginScreen" class="screen">
+        <div class="login-container">
+            <div class="logo">
+                <h1>M.A.F</h1>
+                <p>SALGADOS</p>
+            </div>
+            <h2>Controle de Estoque</h2>
+            <form id="loginForm">
+                <div class="input-group">
+                    <label for="username">Usuário:</label>
+                    <input type="text" id="username" required>
+                </div>
+                <div class="input-group">
+                    <label for="password">Senha:</label>
+                    <input type="password" id="password" required>
+                </div>
+                <button type="submit">Entrar</button>
+            </form>
+            <div id="loginError" class="error-message"></div>
+        </div>
+    </div>
+
+    <!-- Área Principal -->
+    <div id="mainScreen" class="screen" style="display: none;">
+        <header>
+            <div class="header-left">
+                <h1>M.A.F Salgados</h1>
+                <span>Controle de Estoque</span>
+            </div>
+            <div class="header-right">
+                <span id="currentUser"></span>
+                <button onclick="logout()" class="btn-logout">Sair</button>
+            </div>
+        </header>
+
+        <div class="container">
+            <!-- Menu Lateral -->
+            <nav class="sidebar">
+                <ul>
+                    <li><button onclick="showSection('dashboard')" class="active">📊 Dashboard</button></li>
+                    <li><button onclick="showSection('estoque')">📦 Estoque</button></li>
+                    <li><button onclick="showSection('adicionar')">➕ Adicionar Produto</button></li>
+                    <li id="gerenciarUsuariosMenu" style="display: none;">
+                        <button onclick="showSection('usuarios')">👥 Gerenciar Usuários</button>
+                    </li>
+                </ul>
+            </nav>
+
+            <!-- Conteúdo Principal -->
+            <main class="main-content">
+                <!-- Dashboard com Gráficos -->
+                <section id="dashboardSection" class="section active">
+                    <h2>Dashboard</h2>
+                    <div class="dashboard-grid">
+                        <div class="card">
+                            <h3>Produtos Vendidos no Mês</h3>
+                            <canvas id="chartVendasMes"></canvas>
+                        </div>
+                        <div class="card">
+                            <h3>Produtos Vencidos no Último Mês</h3>
+                            <canvas id="chartVencidos"></canvas>
+                        </div>
+                        <div class="card">
+                            <h3>Produtos com Mais Baixas - Mês</h3>
+                            <canvas id="chartBaixasMes"></canvas>
+                        </div>
+                        <div class="card">
+                            <h3>Produtos com Mais Baixas - Semana</h3>
+                            <canvas id="chartBaixasSemana"></canvas>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Seção de Estoque -->
+                <section id="estoqueSection" class="section">
+                    <div class="section-header">
+                        <h2>Estoque Atual</h2>
+                        <div class="export-buttons">
+                            <button onclick="exportToPDF()" class="btn-export">📄 Exportar PDF</button>
+                            <button onclick="exportToExcel()" class="btn-export">📊 Exportar Excel</button>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table id="estoqueTable">
+                            <thead>
+                                <tr>
+                                    <th>Produto</th>
+                                    <th>Quantidade Ideal</th>
+                                    <th>Quantidade Atual</th>
+                                    <th>Data Fabricação</th>
+                                    <th>Validade</th>
+                                    <th>Vendidos Mês</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="estoqueBody"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Seção de Adicionar/Editar Produto -->
+                <section id="adicionarSection" class="section">
+                    <h2 id="formTitle">Adicionar Novo Produto</h2>
+                    <form id="produtoForm" class="form">
+                        <input type="hidden" id="produtoId">
+                        <div class="form-group">
+                            <label for="produtoNome">Nome do Produto:</label>
+                            <input type="text" id="produtoNome" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="quantidadeIdeal">Quantidade Ideal:</label>
+                            <input type="number" id="quantidadeIdeal" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="quantidadeAtual">Quantidade Atual:</label>
+                            <input type="number" id="quantidadeAtual" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="quantidadeVendidaMes">Quantidade Vendida no Mês:</label>
+                            <input type="number" id="quantidadeVendidaMes" min="0" value="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="dataFabricacao">Data de Fabricação:</label>
+                            <input type="date" id="dataFabricacao" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="validade">Validade:</label>
+                            <input type="date" id="validade" required>
+                        </div>
+                        <div class="form-buttons">
+                            <button type="submit" class="btn-primary">Salvar Produto</button>
+                            <button type="button" onclick="cancelarEdicao()" class="btn-cancel" id="btnCancelar" style="display: none;">Cancelar</button>
+                        </div>
+                    </form>
+                </section>
+
+                <!-- Seção de Gerenciar Usuários (apenas Gerente) -->
+                <section id="usuariosSection" class="section">
+                    <h2>Gerenciar Usuários</h2>
+                    <div class="usuarios-container">
+                        <div class="criar-usuario">
+                            <h3>Criar Novo Usuário</h3>
+                            <form id="usuarioForm" class="form">
+                                <div class="form-group">
+                                    <label for="novoUsuario">Usuário:</label>
+                                    <input type="text" id="novoUsuario" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="novaSenha">Senha:</label>
+                                    <input type="password" id="novaSenha" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="tipoUsuario">Tipo:</label>
+                                    <select id="tipoUsuario">
+                                        <option value="funcionario">Funcionário</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn-primary">Criar Usuário</button>
+                            </form>
+                        </div>
+                        <div class="lista-usuarios">
+                            <h3>Usuários Cadastrados</h3>
+                            <div class="table-container">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Usuário</th>
+                                            <th>Tipo</th>
+                                            <th>Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="usuariosBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modal de Registro de Venda -->
+    <div id="vendaModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="fecharModalVenda()">&times;</span>
+            <h2>Registrar Venda</h2>
+            <p id="produtoVendaNome"></p>
+            <form id="vendaForm">
+                <div class="form-group">
+                    <label for="quantidadeVenda">Quantidade Vendida:</label>
+                    <input type="number" id="quantidadeVenda" min="1" required>
+                </div>
+                <button type="submit" class="btn-primary">Registrar Venda</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
